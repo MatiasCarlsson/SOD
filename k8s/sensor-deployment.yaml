@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sensor-config
+  labels:
+    app: sensor-simulator
+data:
+  MQTT_BROKER_HOST: "host.k3d.internal"
+  MQTT_BROKER_PORT: "1883"
+  SENSOR_FREQ_HZ: "1.0"
+  ANOMALY_RATE: "0.08"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sensor-simulator
+  labels:
+    app: sensor-simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sensor-simulator
+  template:
+    metadata:
+      labels:
+        app: sensor-simulator
+    spec:
+      containers:
+        - name: sensor-node
+          image: sod-sensor-simulator:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MQTT_BROKER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: sensor-config
+                  key: MQTT_BROKER_HOST
+            - name: MQTT_BROKER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: sensor-config
+                  key: MQTT_BROKER_PORT
+            - name: SENSOR_FREQ_HZ
+              valueFrom:
+                configMapKeyRef:
+                  name: sensor-config
+                  key: SENSOR_FREQ_HZ
+            - name: ANOMALY_RATE
+              valueFrom:
+                configMapKeyRef:
+                  name: sensor-config
+                  key: ANOMALY_RATE
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ZONE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              cpu: "30m"
+              memory: "48Mi"
+            limits:
+              cpu: "150m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sensor-simulator-service
+  labels:
+    app: sensor-simulator
+spec:
+  type: ClusterIP
+  selector:
+    app: sensor-simulator
+  ports:
+    - name: metrics
+      port: 80
+      targetPort: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sensor-simulator-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sensor-simulator
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+

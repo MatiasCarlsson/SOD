@@ -1,0 +1,59 @@
+---
+- name: Aprovisionamiento y Validación del Entorno Distribuido para Cultivo Hidropónico
+  hosts: localhost
+  gather_facts: true
+  vars:
+    required_binaries:
+      - docker
+      - k3d
+      - kubectl
+    project_directories:
+      - data/raw
+      - data/metrics
+      - data/datasets
+      - config/mosquitto
+      - analysis/figures
+      - docs
+
+  tasks:
+    - name: 1. Mostrar información del sistema anfitrión
+      ansible.builtin.debug:
+        msg: "Ejecutando en {{ ansible_distribution }} {{ ansible_distribution_version }} (Arquitectura: {{ ansible_architecture }})"
+
+    - name: 2. Verificar existencia de binarios de infraestructura requeridos
+      ansible.builtin.command:
+        cmd: "which {{ item }}"
+      register: binary_check
+      changed_when: false
+      loop: "{{ required_binaries }}"
+
+    - name: 3. Comprobar que Docker daemon esté corriendo
+      ansible.builtin.command:
+        cmd: "docker info"
+      register: docker_info
+      changed_when: false
+
+    - name: 4. Asegurar que las carpetas del proyecto existan con permisos adecuados
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../{{ item }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ project_directories }}"
+
+    - name: 5. Validar que la configuración de Mosquitto exista
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/../config/mosquitto/mosquitto.conf"
+      register: mosquitto_conf_stat
+
+    - name: 6. Comprobar que el archivo de configuración de Mosquitto no esté vacío
+      ansible.builtin.assert:
+        that:
+          - mosquitto_conf_stat.stat.exists
+          - mosquitto_conf_stat.stat.size > 0
+        fail_msg: "El archivo mosquitto.conf no existe o está vacío."
+        success_msg: "Configuración de Mosquitto verificada correctamente."
+
+    - name: 7. Resumen de validación de aprovisionamiento
+      ansible.builtin.debug:
+        msg: "El entorno local cumple con todos los requisitos para ejecutar el laboratorio de SOD."
+

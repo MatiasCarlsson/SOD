@@ -1,0 +1,22 @@
+# Entornos virtuales Python
+.venv/
+venv/
+ENV/
+
+# Bytecode y caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Datasets sintéticos masivos y archivos temporales de telemetría
+data/datasets/*.csv
+data/raw/*.json
+data/raw/*.tmp
+*.tmp
+
+# Caches de Docker y logs locales
+*.log
+.DS_Store
+

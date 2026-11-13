@@ -1,0 +1,163 @@
+version: "3.8"
+
+services:
+  # 1. Broker de Mensajería MQTT
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: sod-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+    networks:
+      - sod-net
+
+  # 2. Servicio Recolector de Telemetría (Ingesta a Disco Compartido)
+  collector:
+    build:
+      context: .
+      dockerfile: src/collector/Dockerfile
+    container_name: sod-collector
+    restart: unless-stopped
+    environment:
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - RAW_DATA_DIR=/data/raw
+      - FLUSH_INTERVAL=3.0
+      - BATCH_SIZE=25
+    volumes:
+      - ./data:/data
+    depends_on:
+      - mosquitto
+    networks:
+      - sod-net
+
+  # 3. Controlador en Lazo Cerrado (Evaluación en Tiempo Real y Comandos a Actuadores)
+  controller:
+    build:
+      context: .
+      dockerfile: src/controller/Dockerfile
+    container_name: sod-controller
+    restart: unless-stopped
+    environment:
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - METRICS_DATA_DIR=/data/metrics
+    volumes:
+      - ./data:/data
+    depends_on:
+      - mosquitto
+    networks:
+      - sod-net
+
+  # 4. Simulador de Sensores (Instancia local base en Compose)
+  sensor-simulator:
+    build:
+      context: .
+      dockerfile: src/sensors/Dockerfile
+    container_name: sod-sensor-zona1
+    restart: unless-stopped
+    environment:
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - ZONE_ID=zona_1
+      - SENSOR_FREQ_HZ=1.0
+      - ANOMALY_RATE=0.10
+    depends_on:
+      - mosquitto
+    networks:
+      - sod-net
+
+  # 5. Apache Spark Standalone: Master
+  spark-master:
+    image: apache/spark:3.5.3
+    container_name: sod-spark-master
+    restart: unless-stopped
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_NO_DAEMONIZE=true
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --ip 0.0.0.0 --port 7077 --webui-port 8080
+    ports:
+      - "8080:8080" # Web UI del Master
+      - "7077:7077" # Spark Master RPC
+    volumes:
+      - ./data:/data
+      - ./src/processing/spark:/opt/spark/jobs
+    networks:
+      - sod-net
+
+  # 6. Apache Spark Standalone: Worker 1
+  spark-worker-1:
+    image: apache/spark:3.5.3
+    container_name: sod-spark-worker-1
+    restart: unless-stopped
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_NO_DAEMONIZE=true
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    volumes:
+      - ./data:/data
+      - ./src/processing/spark:/opt/spark/jobs
+    depends_on:
+      - spark-master
+    networks:
+      - sod-net
+
+  # 7. Apache Spark Standalone: Worker 2 (Para Experimento E2 de Escalabilidad)
+  spark-worker-2:
+    image: apache/spark:3.5.3
+    container_name: sod-spark-worker-2
+    profiles: ["scaled-spark"]
+    restart: unless-stopped
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_NO_DAEMONIZE=true
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    volumes:
+      - ./data:/data
+      - ./src/processing/spark:/opt/spark/jobs
+    depends_on:
+      - spark-master
+    networks:
+      - sod-net
+
+  # 8. Apache Spark Standalone: Worker 3 (Para Experimento E2 de Escalabilidad)
+  spark-worker-3:
+    image: apache/spark:3.5.3
+    container_name: sod-spark-worker-3
+    profiles: ["scaled-spark"]
+    restart: unless-stopped
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_NO_DAEMONIZE=true
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    volumes:
+      - ./data:/data
+      - ./src/processing/spark:/opt/spark/jobs
+    depends_on:
+      - spark-master
+    networks:
+      - sod-net
+
+volumes:
+  mosquitto_data:
+
+networks:
+  sod-net:
+    driver: bridge
+
