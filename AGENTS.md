@@ -102,3 +102,4 @@ All reports and slides reflect real measurements stored in `data/metrics/*.csv`:
 - **E1 (10M rows, 3 runs):** Python `34.20 ± 0.39 s` | Hadoop Streaming `38.09 ± 3.18 s` | Spark compute `8.86 ± 0.67 s` (`3.86x` faster than Python, `4.30x` faster than Hadoop).
 - **E2 (Spark on 10M, 3 runs):** 1 worker `14.78 s` (`1.00x`) → 2 workers `11.09 s` (`1.33x`, `66.6%` eff.) → 3 workers `9.18 s` (`1.61x`, `53.6%` eff.).
 - **E5 (Real Mosquitto + Controller):** 1 sensor `0.11 ± 0.22 ms` (P95 `0.49 ms`) | 10 sensors `2.22 ± 1.46 ms` (P95 `4.56 ms`) | 50 sensors `7.56 ± 7.03 ms` (P95 `19.56 ms`).
+
