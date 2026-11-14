@@ -1,116 +1,101 @@
 # Guion de Exposición Oral — PERSONA 2
 
-> **Rol en la defensa:** Orquestación (k3s / k3d), Mensajería MQTT, Motores Big Data (Hadoop vs. Spark), Análisis de Experimentos E1–E5, **Demostración en Vivo 2 (k3s + Spark + Ansible)** y Conclusiones Técnicas.  
-> **Duración estimada de intervención:** ~9 minutos (alternada con Persona 1 para un total de 17–18 minutos).
+> **Rol en la defensa:** orquestación (k3s/k3d), MQTT, Hadoop vs. Spark, experimentos E1–E5, **Demo 2 (k3s)**, **Demo 3 (Spark + Ansible)** y conclusiones técnicas.
+> **Presentación:** `docs/Presentacion_TIF_SOD_2026.pptx` — 24 diapositivas, estilo *Textmode Overlay*, transición *fade* y videos MP4 embebidos.
+> **Duración de tu parte:** ~9 minutos, alternando con Persona 1 (total ~18 min).
+> **Pista visual:** etiqueta **ámbar** arriba a la derecha = te toca a vos.
 
 ---
 
-## Bloque A: Marco Teórico II y III — Orquestación, MQTT y Big Data (Minutos 4:30 a 7:30)
+## Bloque A — Orquestación, mensajería y Big Data (4:40 – 7:20)
 
-> *(Toma la palabra Persona 2 tras Diapositiva 4 de Persona 1)*
+> *(Tomás la palabra después de la Diapositiva 7 de Persona 1)*
 
-### Diapositiva 5 — Marco Teórico II: Orquestación (k8s / k3s) y Mensajería MQTT *(4:30 – 6:00)*
-> `[Avanzar a Diapositiva 5]`
+### Diapositiva 8 — Orquestación con k3s sobre k3d *(4:40 – 5:30)*
+> "Gracias. En un sistema distribuido real no administramos contenedores a mano: necesitamos **orquestación**.
 >
-> "Muchas gracias. Continuando con las capas superiores de nuestra arquitectura, en un entorno distribuido real no podemos administrar contenedores de forma manual; necesitamos **orquestación**.
+> Kubernetes es declarativo: describimos el estado deseado —por ejemplo, cinco réplicas— y un bucle de reconciliación se encarga de que el estado real coincida. Si un pod muere, lo reemplaza.
 >
-> Kubernetes provee el plano de control para gestionar **Pods**, **Deployments** y **Services**, realizando reconciliación continua: si declaramos que debe haber cinco réplicas activas y una falla, el controlador la reemplaza automáticamente. Sin embargo, un clúster Kubernetes tradicional demanda varios gigabytes de RAM solo para sus servicios de control.
->
-> Por eso elegimos **k3s** desplegado mediante **k3d**, una distribución certificada por la CNCF que reduce drásticamente el consumo de memoria y nos permitió crear dentro de Docker un clúster de **tres nodos** —un servidor *control-plane* y dos nodos agentes *workers*— conservando exactamente las mismas abstracciones y comandos `kubectl` que un entorno productivo.
->
-> En cuanto a la comunicación entre sensores y consumidores, adoptamos el protocolo **MQTT** con **Eclipse Mosquitto**. Frente a HTTP tradicional, MQTT trabaja mediante publicación/suscripción sobre TCP con cabeceras mínimas y garantiza tres niveles de desacoplamiento —espacial, temporal y de sincronización— utilizando **QoS 1** (*al menos una vez*) para asegurar que ninguna alerta crítica se pierda en tránsito."
+> Usamos **k3s**, que reemplaza etcd por SQLite y consume menos de 512 MB de RAM, y **k3d**, que lo ejecuta dentro de Docker. A la derecha está nuestra topología: un *server* con el plano de control y dos *agents* donde corren los pods. Los sensores del clúster llegan al broker mediante `host.k3d.internal:1883`."
 
----
-
-### Diapositiva 6 — Marco Teórico III: Hadoop MapReduce vs. Apache Spark *(6:00 – 7:30)*
-> `[Avanzar a Diapositiva 6]`
+### Diapositiva 9 — Mensajería MQTT *(5:30 – 6:15)*
+> "Para comunicar todo usamos **MQTT** con Mosquitto. Los sensores publican, el broker distribuye y los suscriptores —controlador y recolector— reciben del tópico `hidroponia/+/telemetria`.
 >
-> "Por último, para analizar grandes volúmenes históricos de telemetría hidropónica comparamos dos paradigmas clásicos de procesamiento distribuido:
-> - Por un lado, **Apache Hadoop MapReduce**, que divide cualquier cómputo en fases de *Map*, ordenamiento *Shuffle* y *Reduce*. Su limitación histórica es que entre etapas persiste los resultados intermedios en disco, lo cual introduce una penalización severa de entrada/salida. Para este laboratorio implementamos un pipeline de *Hadoop Streaming* en Python ejecutando exactamente la misma lógica de agregación.
-> - Por otro lado, **Apache Spark**, que supera esa barrera procesando datos en **memoria RAM distribuida** mediante DataFrames y el optimizador **Catalyst**, y además nos permite procesar eventos en tiempo real con **Structured Streaming** vigilando los archivos JSON generados por nuestro recolector.
->
-> Le devuelvo la palabra a **[Nombre Persona 1]** para que muestre cómo se integra todo esto en la arquitectura del sistema y nos muestre la primera demostración en vivo."
->
-> `[Handoff -> Toma la palabra Persona 1 en Diapositiva 7]`
+> Ganamos cuatro cosas: desacoplamiento en **espacio** (nadie conoce las IPs de los demás), en **tiempo** (emisor y receptor no necesitan coincidir), un protocolo **liviano** ideal para telemetría a 1 Hz, y **QoS 1**, que con el PUBACK garantiza que ninguna alerta se pierda."
 
----
-
-## Bloque B: Experimentos E1–E5 y DEMO EN VIVO 2 (Minutos 11:30 a 16:45)
-
-> *(Retoma la palabra Persona 2 tras la Demo 1 de Persona 1 en Diapositiva 9)*
-
-### Diapositiva 10 — Experimento E1: Rendimiento según Volumen (1M vs. 10M) *(11:30 – 12:45)*
-> `[Avanzar a Diapositiva 10]`
+### Diapositiva 10 — Hadoop MapReduce vs. Apache Spark *(6:15 – 7:20)*
+> "Para el análisis histórico comparamos dos paradigmas. **Hadoop MapReduce** divide el trabajo en Map, Shuffle y Reduce, y escribe los resultados intermedios en disco: eso penaliza cada etapa con entrada/salida. Lo implementamos con Hadoop Streaming en Python.
 >
-> "Excelente, ya vimos la capa IoT funcionando en tiempo real. Ahora pasemos a los resultados cuantitativos de la campaña experimental, donde cada medición fue repetida **3 veces** en procesos aislados reportando media y desvío estándar.
+> **Spark** mantiene los datos en memoria, arma un plan DAG y lo optimiza con Catalyst; además soporta batch y streaming.
 >
-> En la **Figura 1** tenemos el Experimento E1, comparando **Python secuencial**, **Hadoop Streaming** y **Apache Spark** al procesar 1 millón y 10 millones de lecturas sintéticas:
-> - Fíjense en un detalle muy interesante en **1 millón de registros**: Python secuencial fue el más rápido (**3,28 segundos**), seguido de Hadoop (**4,21 segundos**) y Spark (**5,37 segundos** de cómputo). ¿Por qué ocurre esto? Porque en volúmenes pequeños, el costo fijo de inicializar la JVM, repartir particiones y planificar el DAG en Spark no se llega a amortizar.
-> - Pero miren lo que sucede al multiplicar por diez el volumen, pasando a **10 millones de registros**: mientras Python escala linealmente a **34,20 segundos** y Hadoop sube a **38,09 segundos** por el cuello de botella del ordenamiento en tuberías, **Apache Spark resuelve los 10 millones de filas en apenas 8,86 segundos**. Eso significa que en 10 millones de registros Spark ya es **3,86 veces más rápido que Python** y **4,30 veces más rápido que Hadoop**."
+> Para que la comparación sea justa, Python, Hadoop y Spark ejecutan exactamente la misma agregación: promedios por zona y conteo de alertas.
+>
+> Le devuelvo la palabra a **[Nombre Persona 1]** para la arquitectura."
+>
+> `[Handoff → Persona 1 en Diapositiva 11]`
 
 ---
 
-### Diapositiva 11 — Experimento E2: Escalabilidad de Spark y Ley de Amdahl *(12:45 – 13:45)*
-> `[Avanzar a Diapositiva 11]`
+## Bloque B — Resultados y Demos 2 y 3 (11:00 – 16:50)
+
+> *(Retomás la palabra después de la Demo 1, Diapositiva 14)*
+
+### Diapositiva 15 — Separador `04 // RESULTADOS` *(11:00 – 11:10)*
+> "Todo lo que sigue son mediciones reales, con tres repeticiones en procesos aislados."
+
+### Diapositiva 16 — E1 · Rendimiento según volumen *(11:10 – 12:20)*
+> "En el E1 comparamos los tres motores con 1 y 10 millones de filas.
 >
-> "En el Experimento E2 medimos cómo escala Spark sobre el dataset de 10 millones al asignar **1, 2 y 3 workers**.
+> Con **1 millón** gana Python: **3,28 s**, contra 4,21 s de Hadoop y 5,37 s de Spark. Spark pierde porque paga el arranque de la JVM y la planificación, y con poco volumen ese costo no se amortiza.
 >
-> Como se observa en la **Figura 2**:
-> - Con **1 worker**, el cómputo tarda **14,78 segundos** (base $1,00\times$).
-> - Con **2 workers**, baja a **11,09 segundos**, logrando un *Speedup* de **$1,33\times$** y una eficiencia paralela del **66,6 %**.
-> - Con **3 workers**, baja a **9,18 segundos**, alcanzando un *Speedup* de **$1,61\times$** y una eficiencia del **53,6 %**.
+> Con **10 millones** la historia cambia: Python sube a **34,20 s**, Hadoop a **38,09 s** y Spark resuelve en **8,86 s**. Es decir, **3,86 veces más rápido que Python** y **4,30 veces más rápido que Hadoop**."
+
+### Diapositiva 17 — E2 · Escalabilidad de Spark *(12:20 – 13:20)*
+> "En el E2 medimos cómo escala Spark sobre 10 millones de filas. Con 1 worker tarda **14,78 s**; con 2, **11,09 s** (speedup **1,33×**); con 3, **9,18 s** (speedup **1,61×**). La eficiencia cae del 100 % al **53,6 %**.
 >
-> ¿Por qué la curva real se separa de la línea punteada del *Speedup* ideal? Es la demostración empírica directa de la **Ley de Amdahl**: todo algoritmo distribuido tiene una fracción secuencial irreducible —en nuestro caso la lectura inicial del CSV, la coordinación del driver y la etapa de *shuffle* entre particiones—, por lo que al agregar más workers la ganancia marginal disminuye de forma cóncava."
+> La línea punteada es el ideal. La separación entre ambas curvas es la **Ley de Amdahl**: hay una parte secuencial —leer el CSV, el *collect* en el driver y el *shuffle*— que ningún worker extra puede acelerar."
+
+### Diapositiva 18 — Demo 2 · k3s: escalado y self-healing *(13:20 – 14:30)*
+> *(Hacé **clic sobre el video** o ejecutá el Bloque 3 de `./scripts/demo_en_vivo.sh`.)*
+>
+> "Este es nuestro clúster k3d de tres nodos. Escalamos el simulador a **cinco réplicas** con `kubectl scale`, y en unos **3 segundos** están corriendo, repartidas entre los nodos.
+>
+> Ahora simulamos una falla: **borramos un pod** con `kubectl delete pod`. El ReplicaSet detecta que hay menos réplicas de las deseadas y levanta un reemplazo en **menos de 2 segundos**. Nadie lo recreó a mano: lo hizo el bucle de reconciliación."
+
+### Diapositiva 19 — Demo 3 · Spark e idempotencia *(14:30 – 15:30)*
+> *(Hacé **clic sobre el video** o ejecutá los Bloques 2 y 4 de `./scripts/demo_en_vivo.sh`.)*
+>
+> "Primero ejecutamos el job de Spark sobre 1 millón de lecturas: calcula los promedios de pH, conductividad y temperatura, y las alertas por zona. Después corremos el mismo cálculo con Hadoop Streaming. En esta corrida puntual con 1M, Spark tardó unos 5,4 s y Hadoop unos 4,1 s, lo mismo que mostró el E1 para volúmenes chicos.
+>
+> Por último corremos el playbook de **Ansible** una segunda vez. El `PLAY RECAP` muestra **changed=0**: la infraestructura ya estaba en el estado deseado y no se modificó nada. Eso es idempotencia."
+
+### Diapositiva 20 — E5 · Latencia del lazo cerrado *(15:30 – 16:20)*
+> "En el E5 medimos la latencia real a través de Mosquitto y el controlador, con 1, 10 y 50 sensores concurrentes.
+> - 1 sensor: media **0,11 ms**, P95 **0,49 ms**.
+> - 10 sensores: media **2,22 ms**, P95 **4,56 ms**.
+> - 50 sensores en ráfaga: media **7,56 ms**, P95 **19,56 ms**.
+>
+> Es decir, el 95 % de las reacciones ocurre en menos de 20 ms, muy por debajo de los tiempos químicos y biológicos del cultivo. Alcanza para tiempo real blando."
+
+### Diapositiva 21 — Resumen `tail -f resultados.log` *(16:20 – 16:50)*
+> "En resumen, cada número responde a un pilar: **3,86×** de Spark en E1, **1,61×** de speedup en E2, escalado en **~3 s** en E3, recuperación en **menos de 2 s** en E4, **19,56 ms** de P95 en E5 y **changed=0** en Ansible."
+>
+> `[Handoff → Persona 1 en Diapositiva 22]`
 
 ---
 
-### Diapositiva 12 — DEMO EN VIVO 2 + E3 & E4: Orquestación k3s, Tolerancia a Fallos y Ansible *(13:45 – 15:45)*
-> `[Avanzar a Diapositiva 12 — Cambiar a la Terminal]`
->
-> *(Nota operativa: Continuar `./scripts/demo_en_vivo.sh` con Bloques 2, 3 y 4. Si hay algún inconveniente en vivo, reproducir `docs/videos/02_demo_k3s_escalado_tolerancia.mp4` y `03_demo_spark_hadoop_ansible.mp4`).*
->
-> "Pasemos a la segunda demostración en vivo para comprobar el procesamiento en Spark, la orquestación en k3s y la idempotencia en Ansible."
->
-> *(Ejecutar Bloque 2 — Spark sobre 1M)*
-> "Aquí vemos el job de PySpark calculando exactamente los promedios de pH, conductividad, temperatura y conteo de alertas por cada zona de cultivo."
->
-> *(Ejecutar Bloque 3 — k3s / k3d)*
-> "Ahora miramos nuestro clúster k3s de tres nodos (`1 server` y `2 agents`) ya levantado con `k3d`. Desplegamos el simulador con 1 réplica y lo escalamos a **5 réplicas** con `kubectl scale`."
-> *(Mostrar `kubectl get pods` con los 5 pods en estado `Running`)*
-> "En apenas ~3 segundos Kubernetes distribuyó las 5 réplicas entre los nodos agentes.
->
-> Ahora simulamos una falla crítica en producción: **eliminamos deliberadamente uno de los pods** con `kubectl delete pod`..."
-> *(Ejecutar `kubectl delete pod ...` y luego `kubectl get pods`)*
-> "Como pueden ver inmediatamente, el controlador `ReplicaSet` detectó la desviación respecto al estado deseado y levantó un pod sustituto nuevo en **menos de 2 segundos**, manteniendo el sistema operativo sin intervención manual (*self-healing*)."
->
-> *(Ejecutar Bloque 4 — Ansible)*
-> "Y finalmente ejecutamos nuestro playbook de **Ansible** por segunda vez: observen el resumen final `changed=0`. Esto demuestra **idempotencia**, garantizando que la infraestructura queda exactamente en el estado esperado sin efectos colaterales al re-ejecutarse."
+## Bloque C — Conclusiones técnicas (17:20 – 17:50)
 
----
+> *(En Diapositiva 22 `05 // CIERRE`, Persona 1 introduce el cierre y luego cubre la columna verde de Diapositiva 23.)*
 
-### Diapositiva 13 — Experimento E5: Latencia Fin-a-Fin del Controlador *(15:45 – 16:45)*
-> `[Avanzar a Diapositiva 13 — Volver a las Diapositivas]`
+### Diapositiva 23 — Conclusiones, columna ámbar *(17:20 – 17:50 · después de Persona 1)*
+> "Desde el procesamiento y la resiliencia:
+> - Spark supera **3,86×** a Python y **4,30×** a Hadoop con 10 millones de filas.
+> - Su escalabilidad respeta la Ley de Amdahl.
+> - k3s se recupera solo en menos de 2 segundos, y Ansible hace que el despliegue sea reproducible e idempotente.
 >
-> "Para validar el comportamiento en tiempo real del lazo cerrado bajo carga creciente, en el Experimento E5 medimos la latencia real a través del broker Mosquitto variando entre **1, 10 y 50 sensores concurrentes** disparando anomalías simultáneas:
-> - Con **1 sensor**, la latencia media fue de apenas **0,11 ms** (percentil 95 de **0,49 ms**).
-> - Con **10 sensores**, la media subió a **2,22 ms** (P95 de **4,56 ms**).
-> - Con **50 sensores** disparando en ráfaga simultánea, la media fue de **7,56 ms** (P95 de **19,56 ms**).
+> Nuestra tesis queda abajo: un diseño distribuido convierte un cultivo frágil en un sistema autónomo, medible y resiliente.
 >
-> En todos los escenarios, la respuesta ante una anomalía crítica se ejecuta en el orden de pocos milisegundos, lo cual es órdenes de magnitud más rápido que las constantes de tiempo biológicas y químicas de un cultivo hidropónico."
-
----
-
-## Bloque C: Cierre Técnico (Minutos 17:15 a 17:45)
-
-> *(Tras la intervención de Persona 1 en Diapositiva 14)*
-
-### Diapositiva 14 — Conclusiones *(Parte 2: 17:15 – 17:45)*
-> "Complementando las conclusiones, desde la perspectiva de procesamiento y resiliencia comprobamos tres puntos clave:
-> - **Big Data en memoria:** Apache Spark mostró una clara ventaja a partir de los 10 millones de registros, aunque su eficiencia paralela está sujeta a la Ley de Amdahl.
-> - **Orquestación resiliente:** k3s con k3d permitió validar escalado elástico y autorrecuperación de pods en menos de dos segundos.
-> - **Reproducibilidad:** Ansible y la generación determinista con semilla fija aseguran que cualquier docente o investigador pueda reproducir exactamente estos mismos resultados paso a paso.
+> **[Nombre Persona 1]** cierra con el trabajo futuro."
 >
-> Le devuelvo la palabra a **[Nombre Persona 1]** para cerrar con las líneas de trabajo futuro."
->
-> `[Handoff -> Toma la palabra Persona 1 en Diapositiva 15]`
-
+> `[Handoff → Persona 1 en Diapositiva 24]`

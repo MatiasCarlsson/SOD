@@ -1,141 +1,107 @@
 # Guion de Exposición Oral — PERSONA 1
 
-> **Rol en la defensa:** Introducción, Fundamentos Agronómicos, Virtualización (Proxmox vs. Docker), Arquitectura del Sistema, Implementación IoT en Lazo Cerrado y **Demostración en Vivo 1**.  
-> **Duración estimada de intervención:** ~9 minutos (distribuidos de forma alternada con Persona 2 para lograr una exposición dinámica de 17–18 minutos).
+> **Rol en la defensa:** apertura, contexto agronómico, objetivos, virtualización (Proxmox vs. Docker), arquitectura, simulación IoT, **Demo 1** y cierre.
+> **Presentación:** `docs/Presentacion_TIF_SOD_2026.pptx` — 24 diapositivas, estilo *Textmode Overlay* (terminal), transición *fade* y videos MP4 embebidos.
+> **Duración de tu parte:** ~9 minutos, alternando con Persona 2 (total ~18 min).
+> **Pista visual:** el color de la etiqueta arriba a la derecha indica quién habla — **verde = Persona 1**, ámbar = Persona 2, blanco = ambos.
 
 ---
 
-## Bloque A: Apertura, Contexto y Virtualización (Minutos 0:00 a 4:30)
+## Bloque A — Contexto y teoría (0:00 – 4:40)
 
-### Diapositiva 1 — Portada *(0:00 – 0:45)*
-> *(Mirando al tribunal, tono seguro y pausado)*
+### Diapositiva 1 — Portada `./defensa --start` *(0:00 – 0:40)*
+> "Buenas tardes a los integrantes del tribunal y compañeros. Hoy presentamos nuestro Trabajo Integrador Final de Sistemas Operativos Distribuidos: un **sistema automatizado de cultivo hidropónico distribuido**.
 >
-> "Buenas tardes a los integrantes del tribunal y compañeros. Hoy vamos a presentar nuestro Trabajo Integrador Final de Sistemas Operativos Distribuidos, titulado *'Modelado y análisis de un sistema automatizado de cultivo hidropónico distribuido'*.
->
-> El equipo está integrado por **[Nombre Persona 2]** y quien les habla, **[Nombre Persona 1]**. A lo largo de los próximos 18 minutos vamos a recorrer tanto la investigación teórica comparativa de las herramientas como la implementación práctica de nuestro laboratorio, dos demostraciones en vivo y el análisis estadístico de los cinco experimentos que ejecutamos."
+> El equipo lo integramos **[Nombre Persona 2]** y quien les habla, **[Nombre Persona 1]**. Todo lo que van a ver —métricas, gráficos y videos— sale de mediciones reales de nuestro laboratorio."
 
----
+### Diapositiva 2 — Agenda `ls -la ./defensa` *(0:40 – 1:10)*
+> "La exposición tiene cinco bloques: el contexto del problema, el marco teórico, la arquitectura con una primera demo, los resultados con dos demos más, y el cierre. El color de cada bloque indica quién lo expone."
 
-### Diapositiva 2 — El Problema y el Caso de Estudio: Hidroponía *(0:45 – 2:00)*
-> `[Avanzar a Diapositiva 2]`
+### Diapositiva 3 — Hidroponía: sin margen de error *(1:10 – 2:00)*
+> "¿Por qué hidroponía? En un sistema NFT no hay suelo que amortigüe errores: las raíces dependen por completo de la solución recirculante.
 >
-> "¿Por qué elegimos un cultivo hidropónico como caso de estudio? En la agricultura tradicional, el suelo actúa como un amortiguador natural de nutrientes y humedad. En cambio, en un sistema hidropónico —como la técnica de película nutritiva o NFT— las raíces están suspendidas directamente en una solución acuosa recirculante.
+> Estos cuatro números son el margen de seguridad: pH entre **5,5 y 6,5**; fuera de ese rango precipitan hierro, calcio y fósforo. Tanque por debajo del **30 %**: las bombas cavitan. Temperatura entre **18 y 24 °C**, y conductividad entre **1,2 y 2,5 mS/cm**.
 >
-> Eso vuelve al sistema **crítico en tiempo real**: si el potencial hidrógeno (pH) supera el rango óptimo de 5,5 a 6,5, los nutrientes minerales precipitan y la planta deja de absorberlos; si el nivel del tanque cae por debajo del 30 %, las bombas trabajan en vacío y el cultivo puede perderse en cuestión de horas.
->
-> Trasladado a nuestra materia, esto nos plantea cuatro desafíos concretos de sistemas distribuidos:
-> 1. Necesitamos **comunicación desacoplada** entre múltiples zonas de sensores y actuadores.
-> 2. Exige **control en lazo cerrado con baja latencia** ante anomalías.
-> 3. Requiere **alta disponibilidad y tolerancia a fallos** si un nodo sensor cae.
-> 4. Y, a gran escala, genera millones de lecturas que demandan **procesamiento paralelo distribuido**."
+> La consecuencia es que una desviación no detectada se convierte en pérdida de cultivo en horas. Necesitamos medir siempre y reaccionar sin intervención humana."
 
----
+### Diapositiva 4 — Del cultivo a los Sistemas Distribuidos *(2:00 – 2:45)*
+> "Cada una de esas necesidades es un problema clásico de nuestra materia:
+> - **Desacoplamiento:** sensores y actuadores que no se conocen entre sí → MQTT.
+> - **Tiempo real:** reaccionar en milisegundos → control en lazo cerrado.
+> - **Tolerancia a fallos:** si cae un nodo, que se recupere solo → k3s.
+> - **Escalabilidad:** analizar millones de lecturas → Spark frente a Hadoop."
 
-### Diapositiva 3 — Objetivos del Trabajo *(2:00 – 3:00)*
-> `[Avanzar a Diapositiva 3]`
->
-> "Para dar respuesta a este escenario, nos propusimos cinco objetivos clave:
-> - En primer lugar, **investigar y comparar** los paradigmas de virtualización completa frente a contenedores, y de procesamiento por lotes tradicional frente a memoria distribuida.
-> - En segundo lugar, **construir un laboratorio reproducible** basado en contenedores Docker, automatizado de forma idempotente con Ansible.
-> - Tercero, **modelar el sistema hidropónico** mediante simuladores con ruido gaussiano y deriva temporal, conectados vía MQTT a un controlador automático.
-> - Cuarto, **orquestar** los sensores en un clúster multinodo de k3s para probar escalado horizontal y autorrecuperación.
-> - Y quinto, **medir y analizar** experimentalmente el desempeño mediante cinco baterías de pruebas (E1 a E5) repetidas al menos tres veces cada una."
+### Diapositiva 5 — Objetivos *(2:45 – 3:30)*
+> "De ahí salen cinco objetivos: **comparar** virtualización completa con contenedores, y MapReduce con Spark; **desplegar** un laboratorio reproducible con Docker Compose y Ansible; **simular** sensores realistas con un controlador en lazo cerrado; **orquestar** un clúster k3s multinodo; y **medir** cinco experimentos, E1 a E5, con repeticiones."
 
----
+### Diapositiva 6 — Separador `02 // MARCO TEÓRICO` *(3:30 – 3:40)*
+> "Antes de la implementación, repasemos las bases teóricas."
 
-### Diapositiva 4 — Marco Teórico I: Virtualización Completa vs. Contenedores *(3:00 – 4:30)*
-> `[Avanzar a Diapositiva 4]`
+### Diapositiva 7 — KVM (Proxmox) vs. Docker *(3:40 – 4:40)*
+> "En la base está la virtualización. **Proxmox** usa KVM, un hipervisor tipo 1: cada máquina virtual emula hardware y corre su propio kernel. Eso da un aislamiento fuerte, pero cuesta RAM reservada y arranques de 30 a 90 segundos.
 >
-> "Arrancando por la capa de infraestructura, en la asignatura analizamos **Proxmox VE**, una plataforma basada en hipervisor Tipo 1 con **KVM** para virtualización completa y **LXC** para contenedores.
+> **Docker** virtualiza a nivel de sistema operativo: todos los contenedores comparten el kernel del host y se aíslan con **namespaces** y **cgroups**. Arrancan en uno o dos segundos.
 >
-> Como pueden ver en la tabla comparativa de la diapositiva, la diferencia central está en la capa de abstracción:
-> - Una máquina virtual en KVM emula hardware completo y ejecuta su propio sistema operativo huésped con un kernel independiente. Eso brinda aislamiento extremo, pero paga una penalidad alta en memoria RAM fija y tiempos de arranque de 30 a 90 segundos.
-> - Por el contrario, **Docker** realiza virtualización a nivel de sistema operativo: todos los contenedores comparten el kernel del host Linux, logrando el aislamiento mediante **namespaces** (que separan procesos, red y sistema de archivos) y **cgroups** (que limitan el consumo de CPU y memoria).
+> Por eso, como muestra el recuadro de decisión, Proxmox lo analizamos en teoría y en el laboratorio usamos Docker para emular varios nodos y un clúster k3s en una sola máquina.
 >
-> Esta ligereza nos permite levantar en segundos varios nodos simulados en una computadora de laboratorio de 16 GB de RAM, manteniendo los mismos conceptos de red aislada, volúmenes y gestión de recursos.
+> Le paso la palabra a **[Nombre Persona 2]** para la orquestación y la mensajería."
 >
-> Ahora le paso la palabra a **[Nombre Persona 2]** para que profundice en la orquestación, la mensajería IoT y los motores de Big Data."
->
-> `[Handoff -> Toma la palabra Persona 2 en Diapositiva 5]`
+> `[Handoff → Persona 2 en Diapositiva 8]`
 
 ---
 
-## Bloque B: Arquitectura, Capa IoT y DEMO EN VIVO 1 (Minutos 7:30 a 11:30)
+## Bloque B — Arquitectura y Demo 1 (7:20 – 11:00)
 
-> *(Retoma la palabra Persona 1 tras Diapositiva 6 de Persona 2)*
+> *(Retomás la palabra después de la Diapositiva 10 de Persona 2)*
 
-### Diapositiva 7 — Arquitectura General del Sistema *(7:30 – 8:45)*
-> `[Avanzar a Diapositiva 7]`
->
-> "Gracias. Viendo cómo encajan todas estas piezas juntas, en la Diapositiva 7 observamos la arquitectura completa de nuestro laboratorio distribuido.
->
-> A la izquierda tenemos la capa de generación: las réplicas del **simulador de sensores** —que pueden ejecutarse tanto en Docker Compose como en el clúster **k3s**— publican sus lecturas hacia el **broker Eclipse Mosquitto** por el puerto 1883.
->
-> A partir del broker, el flujo se bifurca de manera totalmente desacoplada hacia dos consumidores simultáneos:
-> - Por un lado, nuestro **Controlador Reactivo en Lazo Cerrado**, que evalúa cada lectura en memoria en tiempo real y, si detecta una variable fuera de rango, publica inmediatamente una orden hacia el tópico del actuador correspondiente (por ejemplo, dosificar ácido o encender la bomba de agua).
-> - Por otro lado, el **Servicio Recolector**, que acumula las lecturas en buffer y las persiste atómicamente en lotes JSON sobre un volumen compartido, dejándolas listas para ser consumidas tanto por **Apache Spark** (en modo Batch y Structured Streaming) como por **Hadoop MapReduce**."
+### Diapositiva 11 — Separador `03 // ARQUITECTURA` *(7:20 – 7:30)*
+> "Gracias. Con la teoría clara, veamos cómo lo construimos."
 
----
+### Diapositiva 12 — Arquitectura del laboratorio *(7:30 – 8:40)*
+> "El flujo se lee de izquierda a derecha. **(1)** Los sensores corren en Docker o como pods de k3s y publican en **(2)** Mosquitto, puerto 1883.
+>
+> Desde el broker el flujo se bifurca: **(3A)** el controlador evalúa cada lectura y ordena al actuador que corresponda, y además registra la latencia; **(3B)** el recolector acumula lecturas en memoria y las vuelca en lotes JSON atómicos en `data/raw/`.
+>
+> Esos datos alimentan **(4)** el procesamiento distribuido con Spark, Hadoop y una línea base en Python. Y **(5)** Ansible verifica todo el entorno de forma idempotente."
 
-### Diapositiva 8 — Simulación Hidropónica y Control en Lazo Cerrado *(8:45 – 9:45)*
-> `[Avanzar a Diapositiva 8]`
+### Diapositiva 13 — Simulación y control reactivo *(8:40 – 9:40)*
+> "Los sensores son simulados pero realistas: cinco variables, ruido gaussiano, deriva sinusoidal, evaporación y alrededor de un **8 % de anomalías** inyectadas para exigir al controlador. La semilla fija hace que todo sea reproducible.
 >
-> "Para que la simulación sea fiel a un entorno físico real, programamos los nodos sensores en Python con **semilla determinista** para reproducibilidad, incorporando **ruido térmico gaussiano** y **deriva temporal** —por ejemplo, una caída paulatina del nivel de agua por evapotranspiración y oscilaciones suaves de pH y temperatura— además de una tasa configurable de inyección de anomalías.
+> En la tabla están las reglas: pH mayor a 6,5 → `DOSIFICAR_ACIDO`; menor a 5,5 → `DOSIFICAR_BASE`; agua por debajo del 30 % → `REPONER_AGUA`; y temperatura fuera de 18–24 °C → enfriador o calefactor.
 >
-> El controlador implementa reglas agronómicas concretas:
-> - Si el pH supera **6,5**, dispara la acción `DOSIFICAR_ACIDO`.
-> - Si el pH cae debajo de **5,5**, dispara `DOSIFICAR_BASE`.
-> - Si el nivel de agua baja de **30 %**, ordena `REPONER_AGUA`.
-> - Y en cada evento anómalo registra el *timestamp* exacto desde que el sensor emitió la lectura hasta que el controlador despachó la orden al actuador, lo que nos permite medir la latencia real del lazo cerrado."
+> La latencia fin a fin es el tiempo entre que el sensor emite la lectura y el controlador despacha la orden. Se guarda en un CSV y es la base del experimento E5."
 
----
-
-### Diapositiva 9 — DEMO EN VIVO 1: Stack IoT y Control Reactivo *(9:45 – 11:30)*
-> `[Avanzar a Diapositiva 9 — Cambiar a la Terminal]`
+### Diapositiva 14 — Demo 1 · Lazo cerrado IoT *(9:40 – 11:00)*
+> *(Nota: hacé **clic sobre el video** para reproducirlo dentro de la diapositiva, o ejecutá el Bloque 1 de `./scripts/demo_en_vivo.sh`.)*
 >
-> *(Nota operativa: Ejecutar `./scripts/demo_en_vivo.sh` o los comandos de Compose del Bloque 1. Si hubiera un inconveniente con la máquina en el aula, reproducir `docs/videos/01_demo_iot_lazo_cerrado.mp4`).*
+> "Veámoslo funcionando. Levantamos el stack con `docker compose up -d`: broker, sensor, controlador y recolector. Con `docker compose ps` comprobamos que los cuatro servicios están arriba en segundos.
 >
-> "Vamos a verlo funcionando en vivo. Aquí en la terminal levantamos el stack base con `docker compose up -d` incluyendo Mosquitto, el recolector, el controlador y un simulador de zona 1."
+> En los logs vemos que el sensor y el controlador se conectan al broker y se suscriben a `hidroponia/+/telemetria`. Y con `ls data/raw/` comprobamos que el recolector ya está escribiendo los lotes JSON."
 >
-> *(Mostrar `docker compose ps`)*
-> "Como pueden ver, los cuatro contenedores están activos y saludables en cuestión de segundos.
+> *(Solo si lo ejecutás en vivo y aparece la línea del controlador:)* "Ahí está: llegó un pH por encima de 6,5 y el controlador emitió `DOSIFICAR_ACIDO` al instante."
 >
-> Ahora observamos los logs en tiempo real del sensor y del controlador..."
-> *(Esperar 4–5 segundos a que aparezca una línea `ACCION REPORTE` en amarillo/naranja)*
-> "¡Ahí está! Fíjense en esa línea: el sensor reportó un pico anómalo de pH por encima de 6,5 e inmediatamente el controlador emitió la orden `DOSIFICAR_ACIDO` al tópico `dosificador_acido`, registrando una **latencia fin-a-fin por debajo de 1 milisegundo**."
+> "Le cedo la palabra a **[Nombre Persona 2]** para los resultados."
 >
-> *(Mostrar `ls -lh data/raw/`)*
-> "Y en paralelo, el recolector ya está escribiendo los lotes de archivos JSON en el volumen compartido `/data/raw`, listos para ser ingeridos por Spark Structured Streaming.
->
-> Con esto comprobado en vivo, le cedo nuevamente la palabra a **[Nombre Persona 2]** para analizar los experimentos de Big Data y la segunda demo en Kubernetes."
->
-> `[Handoff -> Toma la palabra Persona 2 en Diapositiva 10]`
+> `[Handoff → Persona 2 en Diapositiva 15]`
 
 ---
 
-## Bloque C: Cierre y Conclusiones Compartidas (Minutos 16:45 a 18:30)
+## Bloque C — Cierre (16:50 – 18:30)
 
-> *(Retoma la palabra Persona 1 tras la Diapositiva 13 de Persona 2)*
+> *(Retomás la palabra después de la Diapositiva 21 de Persona 2)*
 
-### Diapositiva 14 — Conclusiones *(Parte 1: 16:45 – 17:15)*
-> `[Avanzar a Diapositiva 14]`
+### Diapositiva 22 — Separador `05 // CIERRE` *(16:50 – 16:55)*
+> "Vamos cerrando."
+
+### Diapositiva 23 — Conclusiones, columna verde *(16:55 – 17:20)*
+> "Desde la infraestructura y la capa IoT:
+> - Docker y k3d nos permitieron modelar un clúster multinodo con una fracción de los recursos de las máquinas virtuales.
+> - MQTT desacopló productores y consumidores con latencias de milisegundos.
+> - Separar el control reactivo de la ingesta batch le dio estabilidad al sistema ante picos de carga."
 >
-> "Para ir cerrando, como conclusiones centrales de la arquitectura e infraestructura podemos destacar que:
-> - La virtualización por contenedores Docker y k3d permitió modelar fielmente un entorno multinodo y multicomponente con una fracción mínima de recursos frente a máquinas virtuales completas.
-> - El patrón publicación/suscripción sobre Mosquitto nos dio un desacoplamiento total con latencias en torno al milisegundo, ideales para control reactivo en lazo cerrado."
->
-> *(Persona 2 completa los puntos de Big Data, k3s y Ansible en la misma Diapositiva 14)*
+> *(Persona 2 completa la columna ámbar y lee la tesis.)*
 
----
-
-### Diapositiva 15 — Trabajo Futuro y Preguntas *(17:45 – 18:30)*
-> `[Avanzar a Diapositiva 15]`
+### Diapositiva 24 — Trabajo futuro y preguntas *(17:50 – 18:30)*
+> "Como trabajo futuro proponemos tres líneas: **Kafka** para retener eventos de forma distribuida, **Prometheus y Grafana** para observar pods, workers y pH en tiempo real, y **Ceph sobre Proxmox** para almacenamiento distribuido en un clúster físico.
 >
-> "Finalmente, dejamos abiertas cuatro líneas claras de evolución futura para este laboratorio:
-> 1. Incorporar **Apache Kafka** junto a Mosquitto para retención distribuida de eventos a largo plazo (*event sourcing*).
-> 2. Desplegar un stack de observabilidad con **Prometheus y Grafana** para visualizar métricas de los pods y sensores en tableros web.
-> 3. Evaluar almacenamiento distribuido con **Ceph** sobre **Proxmox VE** en un clúster físico multi-host.
-> 4. Y migrar el controlador a microservicios con políticas de *service mesh* en la nube.
->
-> Muchísimas gracias por su atención. Quedamos a disposición del tribunal para responder cualquier consulta."
-
+> El repositorio, con el informe, el código y los datasets reproducibles, está en el enlace. Muchas gracias por su atención; quedamos a disposición para sus preguntas."
