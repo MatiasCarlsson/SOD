@@ -165,10 +165,7 @@ def lines_block(slide, x, y, w, h, items, size=14, prefix="▸ ", prefix_color=C
 
 
 def chrome(slide, path, speaker, num):
-    """Línea de prompt superior + línea de estado inferior (solo texto, sin barras de color)."""
-    txt(slide, 0.5, 0.22, 9.0, 0.3,
-        [[("matias@hidroponia", C_GREEN, True, 11), (":", C_MUTED, False, 11),
-          (f"~/tif-sod/{path}", C_MUTED, False, 11), ("$", C_MUTED, False, 11)]])
+    """Indicador de expositor + número de diapositiva arriba a la derecha y línea de estado inferior."""
     sp_color = C_GREEN if "1" in speaker and "2" not in speaker else C_AMBER
     if "1" in speaker and "2" in speaker:
         sp_color = C_TEXT
@@ -406,14 +403,13 @@ def build(d: Deck):
     # ---------------------------------------------------------------- 01 PORTADA
     s = d.slide("[Persona 1 | 0:00 - 0:40] Saludo al tribunal, presentación de integrantes y del tema. "
                 "Mencionar que todo lo que verán (métricas, videos) proviene de mediciones reales del laboratorio.")
-    txt(s, 0.5, 0.22, 12.3, 0.3, [[("matias@hidroponia", C_GREEN, True, 11), (":~/tif-sod$ ./defensa --start", C_MUTED, False, 11)]])
     boot = [
         ("[  OK  ] ", "broker mosquitto escuchando en :1883"),
         ("[  OK  ] ", "clúster k3d listo (1 server + 2 agents)"),
         ("[  OK  ] ", "spark master + workers registrados"),
         ("[  OK  ] ", "ansible-playbook → changed=0"),
     ]
-    txt(s, 0.5, 0.75, 8.0, 1.4, [[(a, C_GREEN, True, 12), (b, C_MUTED, False, 12)] for a, b in boot], spacing_after=2)
+    txt(s, 0.5, 0.55, 8.0, 1.4, [[(a, C_GREEN, True, 12), (b, C_MUTED, False, 12)] for a, b in boot], spacing_after=2)
     txt(s, 0.5, 2.35, 12.3, 2.1,
         [[("Sistema automatizado de cultivo", C_TEXT, True, 40)],
          [("hidropónico ", C_TEXT, True, 40), ("distribuido", C_GREEN, True, 40), (" █", C_AMBER, False, 36)]])
