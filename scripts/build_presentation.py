@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
 Generador de Presentación Académica Fluida (15–20 min) en formato PPTX y PDF.
-Incluye 15 diapositivas diseñadas para Persona 1 y Persona 2, con diagramas,
-tablas comparativas, gráficos experimentales reales y notas de orador.
+Incluye 16 diapositivas diseñadas para Persona 1 y Persona 2, con diagramas,
+tablas comparativas, gráficos experimentales reales, videos MP4 embebidos y notas de orador.
 """
 import os
 import subprocess
+import tempfile
+from PIL import Image, ImageDraw
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -15,6 +17,7 @@ from pptx.enum.shapes import MSO_SHAPE
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DOCS_DIR = os.path.join(ROOT_DIR, "docs")
 FIG_DIR = os.path.join(ROOT_DIR, "analysis", "figures")
+VID_DIR = os.path.join(DOCS_DIR, "videos")
 os.makedirs(DOCS_DIR, exist_ok=True)
 
 # Paleta de diseño de ingeniería (Alta legibilidad en proyector y PDF)
@@ -42,7 +45,7 @@ def set_bg(slide, color):
     fill.fore_color.rgb = color
 
 
-def add_header(slide, title: str, speaker: str, slide_num: int, total_slides: int = 15):
+def add_header(slide, title: str, speaker: str, slide_num: int, total_slides: int = 16):
     set_bg(slide, C_BG_LIGHT)
     # Barra superior
     bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(0.95))
@@ -101,7 +104,7 @@ def add_header(slide, title: str, speaker: str, slide_num: int, total_slides: in
     fp.font.color.rgb = C_MUTED
 
 
-def add_card(slide, left, top, width, height, title=None, bullets=None, bg=C_CARD, border=C_BORDER, title_color=C_NAVY, font_size=14):
+def add_card(slide, left, top, width, height, title=None, bullets=None, bg=C_CARD, border=C_BORDER, title_color=C_NAVY, text_color=C_TEXT, font_size=14):
     card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(left), Inches(top), Inches(width), Inches(height))
     card.adjustments[0] = 0.03
     card.fill.solid()
@@ -130,7 +133,7 @@ def add_card(slide, left, top, width, height, title=None, bullets=None, bg=C_CAR
                 p.text = f"• {item}" if not item.startswith("→") and not item.startswith("•") else item
                 p.font.name = FONT_FAMILY
                 p.font.size = Pt(font_size)
-                p.font.color.rgb = C_TEXT
+                p.font.color.rgb = text_color
                 p.space_after = Pt(6)
     return card
 
@@ -172,7 +175,111 @@ def set_notes(slide, text):
     notes.notes_text_frame.text = text
 
 
+def create_video_poster(video_path: str, out_png: str, timestamp_sec: float) -> str:
+    """Extrae un fotograma representativo del MP4 con ffmpeg y superpone botón Play."""
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-ss", f"{timestamp_sec:.2f}", "-i", video_path,
+            "-frames:v", "1", "-q:v", "2", out_png,
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    with Image.open(out_png).convert("RGBA") as img:
+        overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(overlay)
+        cx, cy = img.width // 2, img.height // 2
+        r = 68
+        draw.ellipse(
+            (cx - r, cy - r, cx + r, cy + r),
+            fill=(15, 23, 42, 185),
+            outline=(6, 182, 212, 240),
+            width=5,
+        )
+        tri = [(cx - 20, cy - 30), (cx - 20, cy + 30), (cx + 34, cy)]
+        draw.polygon(tri, fill=(255, 255, 255, 240))
+        combined = Image.alpha_composite(img, overlay).convert("RGB")
+        combined.save(out_png, format="PNG")
+    return out_png
+
+
+def add_demo_video_slide(
+    prs,
+    blank,
+    *,
+    badge_text: str,
+    title: str,
+    bullets: list,
+    accent_color,
+    video_filename: str,
+    timestamp_sec: float,
+    caption: str,
+    notes_text: str,
+    poster_dir: str,
+):
+    """Construye una diapositiva oscura con tarjeta de guía y video MP4 16:9 embebido."""
+    slide = prs.slides.add_slide(blank)
+    set_bg(slide, C_NAVY)
+
+    badge_tb = slide.shapes.add_textbox(Inches(0.55), Inches(0.24), Inches(12.23), Inches(0.35))
+    bp = badge_tb.text_frame.paragraphs[0]
+    bp.text = badge_text
+    bp.font.name = FONT_FAMILY
+    bp.font.size = Pt(13)
+    bp.font.bold = True
+    bp.font.color.rgb = accent_color
+
+    title_tb = slide.shapes.add_textbox(Inches(0.55), Inches(0.58), Inches(12.23), Inches(0.55))
+    tp = title_tb.text_frame.paragraphs[0]
+    tp.text = title
+    tp.font.name = FONT_FAMILY
+    tp.font.size = Pt(22)
+    tp.font.bold = True
+    tp.font.color.rgb = C_WHITE
+
+    add_card(
+        slide, 0.55, 1.25, 4.35, 5.75,
+        title="Guía de Ejecución y Puntos Clave",
+        bullets=bullets,
+        bg=C_SLATE,
+        border=accent_color,
+        title_color=accent_color,
+        text_color=C_WHITE,
+        font_size=13,
+    )
+
+    video_path = os.path.join(VID_DIR, video_filename)
+    poster_path = os.path.join(poster_dir, f"{os.path.splitext(video_filename)[0]}.png")
+    create_video_poster(video_path, poster_path, timestamp_sec)
+    slide.shapes.add_movie(
+        video_path,
+        Inches(5.12), Inches(1.25), Inches(7.68), Inches(4.32),
+        poster_frame_image=poster_path,
+        mime_type="video/mp4",
+    )
+
+    add_card(
+        slide, 5.12, 5.72, 7.68, 1.28,
+        title="Video MP4 Embebido (Reproducible sin conexión)",
+        bullets=[caption, f"Archivo origen: docs/videos/{video_filename}"],
+        bg=C_SLATE,
+        border=C_BORDER,
+        title_color=accent_color,
+        text_color=C_WHITE,
+        font_size=12,
+    )
+
+    set_notes(slide, notes_text)
+    return slide
+
+
 def build_deck():
+    with tempfile.TemporaryDirectory() as poster_dir:
+        _build_deck_with_posters(poster_dir)
+
+
+def _build_deck_with_posters(poster_dir: str):
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
@@ -429,34 +536,26 @@ def build_deck():
     set_notes(s8, "[Persona 1 | 8:45 - 9:45] Detallar variables agronómicas y las reglas exactas del controlador.")
 
     # --------------------------------------------------------------------------
-    # SLIDE 9: DEMO EN VIVO 1
+    # SLIDE 9: DEMO EN VIVO 1 (STACK IoT EMBEDDED VIDEO)
     # --------------------------------------------------------------------------
-    s9 = prs.slides.add_slide(blank)
-    set_bg(s9, C_NAVY)
-    add_card(s9, 1.0, 1.0, 11.33, 5.5, title="DEMOSTRACIÓN EN VIVO 1 — Stack IoT y Control en Lazo Cerrado", bullets=[
-        "→ Paso 1: Levantar el laboratorio base con `docker compose up -d` (Mosquitto, Sensor, Recolector, Controlador).",
-        "→ Paso 2: Verificar estado saludable de contenedores con `docker compose ps`.",
-        "→ Paso 3: Observar telemetría en vivo y al controlador disparando `DOSIFICAR_ACIDO` en < 1 ms ante pH > 6,5.",
-        "→ Paso 4: Verificar los lotes JSON escritos atómicamente por el recolector en `data/raw/`.",
-        "→ Respaldo en video: `docs/videos/01_demo_iot_lazo_cerrado.mp4`",
-    ], bg=C_SLATE, border=C_TEAL, title_color=C_CYAN, font_size=16)
-    # Recolorear texto de bullets a blanco en fondo oscuro
-    for p in s9.shapes[0].text_frame.paragraphs if False else []:
-        pass
-    # Fix text color inside dark demo card
-    for shp in s9.shapes:
-        if shp.has_text_frame:
-            for idx, p in enumerate(shp.text_frame.paragraphs):
-                if idx > 0:
-                    p.font.color.rgb = C_WHITE
-    badge_d1 = s9.shapes.add_textbox(Inches(1.0), Inches(0.35), Inches(11.33), Inches(0.5))
-    bp1 = badge_d1.text_frame.paragraphs[0]
-    bp1.text = "PERSONA 1  |  MINUTO 9:45 – 11:30  |  EJECUCIÓN EN TERMINAL"
-    bp1.font.name = FONT_FAMILY
-    bp1.font.size = Pt(14)
-    bp1.font.bold = True
-    bp1.font.color.rgb = C_TEAL
-    set_notes(s9, "[Persona 1 | 9:45 - 11:30] Ejecutar Bloque 1 de ./scripts/demo_en_vivo.sh. Luego pasar palabra a Persona 2.")
+    add_demo_video_slide(
+        prs,
+        blank,
+        badge_text="PERSONA 1  |  MINUTO 9:45 – 11:30  |  DEMOSTRACIÓN 1 (STACK IoT)",
+        title="Demostración 1 — Stack IoT y Control en Lazo Cerrado",
+        bullets=[
+            "→ Levantar stack: `docker compose up -d` (Mosquitto, Sensor, Recolector, Controlador).",
+            "→ Verificar salud de servicios con `docker compose ps`.",
+            "→ Controlador reacciona disparando `DOSIFICAR_ACIDO` en < 1 ms ante pH > 6,5.",
+            "→ Recolector persiste lotes JSON atómicos en `data/raw/`.",
+        ],
+        accent_color=C_CYAN,
+        video_filename="01_demo_iot_lazo_cerrado.mp4",
+        timestamp_sec=12.5,
+        caption="Grabación HD real del lazo cerrado MQTT en terminal (~16,5 s).",
+        notes_text="[Persona 1 | 9:45 - 11:30] Reproducir Demo 1 embebida o ejecutar Bloque 1 de ./scripts/demo_en_vivo.sh. Luego pasar palabra a Persona 2.",
+        poster_dir=poster_dir,
+    )
 
     # --------------------------------------------------------------------------
     # SLIDE 10: RESULTADOS E1 (VOLUMEN DE DATOS)
@@ -517,41 +616,59 @@ def build_deck():
     set_notes(s11, "[Persona 2 | 12:45 - 13:45] Analizar Speedup real vs ideal sobre 10M filas.")
 
     # --------------------------------------------------------------------------
-    # SLIDE 12: DEMO EN VIVO 2 + E3 & E4
+    # SLIDE 12: DEMO EN VIVO 2 (ORQUESTACIÓN k3s E3/E4 EMBEDDED VIDEO)
     # --------------------------------------------------------------------------
-    s12 = prs.slides.add_slide(blank)
-    set_bg(s12, C_NAVY)
-    add_card(s12, 0.8, 0.95, 11.73, 5.8, title="DEMOSTRACIÓN EN VIVO 2 — Spark, Orquestación k3s (E3/E4) y Ansible", bullets=[
-        "→ Paso 1 (Big Data): Ejecutar job PySpark Batch sobre 1M de registros.",
-        "→ Paso 2 (k3s E3): Clúster k3d de 3 nodos (`1 server + 2 agents`) → `kubectl scale --replicas=5` (~3 s).",
-        "→ Paso 3 (Fallas E4): Eliminar un pod (`kubectl delete pod`) → ReplicaSet regenera el pod en < 2 s (Self-Healing).",
-        "→ Paso 4 (IaC): Re-ejecutar `ansible-playbook` demostrando idempotencia estricta (`changed=0`).",
-        "→ Respaldos MP4: `docs/videos/02_demo_k3s_escalado_tolerancia.mp4` y `03_demo_spark_hadoop_ansible.mp4`",
-    ], bg=C_SLATE, border=C_AMBER, title_color=C_AMBER, font_size=15)
-    for shp in s12.shapes:
-        if shp.has_text_frame:
-            for idx, p in enumerate(shp.text_frame.paragraphs):
-                if idx > 0:
-                    p.font.color.rgb = C_WHITE
-    badge_d2 = s12.shapes.add_textbox(Inches(0.8), Inches(0.32), Inches(11.73), Inches(0.5))
-    bp2 = badge_d2.text_frame.paragraphs[0]
-    bp2.text = "PERSONA 2  |  MINUTO 13:45 – 15:45  |  EJECUCIÓN EN TERMINAL"
-    bp2.font.name = FONT_FAMILY
-    bp2.font.size = Pt(14)
-    bp2.font.bold = True
-    bp2.font.color.rgb = C_AMBER
-    set_notes(s12, "[Persona 2 | 13:45 - 15:45] Ejecutar Bloques 2, 3 y 4 de ./scripts/demo_en_vivo.sh.")
+    add_demo_video_slide(
+        prs,
+        blank,
+        badge_text="PERSONA 2  |  MINUTO 13:45 – 14:55  |  DEMOSTRACIÓN 2 (k3s E3 & E4)",
+        title="Demostración 2 — Escalado Horizontal y Self-Healing en k3s",
+        bullets=[
+            "→ Clúster k3d de 3 nodos reales (`1 server + 2 agents`).",
+            "→ E3 (Escalado): `kubectl scale --replicas=5` converge en ~3 s.",
+            "→ E4 (Tolerancia a fallas): `kubectl delete pod` dispara recreación por ReplicaSet en < 2 s.",
+            "→ Distribución multi-nodo verificable con `-o wide`.",
+        ],
+        accent_color=C_AMBER,
+        video_filename="02_demo_k3s_escalado_tolerancia.mp4",
+        timestamp_sec=18.0,
+        caption="Grabación HD real en clúster k3d/k3s ejecutando E3 y E4 (~22,9 s).",
+        notes_text="[Persona 2 | 13:45 - 14:55] Reproducir Demo 2 embebida o ejecutar Bloque 3 de ./scripts/demo_en_vivo.sh.",
+        poster_dir=poster_dir,
+    )
 
     # --------------------------------------------------------------------------
-    # SLIDE 13: RESULTADOS E5 (LATENCIA LAZO CERRADO)
+    # SLIDE 13: DEMO EN VIVO 3 (SPARK Y ANSIBLE EMBEDDED VIDEO)
     # --------------------------------------------------------------------------
-    s13 = prs.slides.add_slide(blank)
-    add_header(s13, "10. Experimento E5: Latencia Real de Control en Lazo Cerrado", "Persona 2", 13)
+    add_demo_video_slide(
+        prs,
+        blank,
+        badge_text="PERSONA 2  |  MINUTO 14:55 – 15:45  |  DEMOSTRACIÓN 3 (SPARK & ANSIBLE)",
+        title="Demostración 3 — Spark Batch (1M) e Idempotencia Ansible",
+        bullets=[
+            "→ Big Data: Ejecución de job PySpark Batch agregando 1M de lecturas.",
+            "→ Comparativa directa con arquitectura MapReduce / Hadoop Streaming.",
+            "→ IaC: Re-ejecución de `ansible-playbook` validando estado estable (`changed=0`).",
+            "→ Garantía de reproducibilidad end-to-end del entorno.",
+        ],
+        accent_color=C_CYAN,
+        video_filename="03_demo_spark_hadoop_ansible.mp4",
+        timestamp_sec=16.5,
+        caption="Grabación HD real ejecutando Spark 1M e idempotencia Ansible (~20,1 s).",
+        notes_text="[Persona 2 | 14:55 - 15:45] Reproducir Demo 3 embebida o ejecutar Bloques 2 y 4 de ./scripts/demo_en_vivo.sh.",
+        poster_dir=poster_dir,
+    )
+
+    # --------------------------------------------------------------------------
+    # SLIDE 14: RESULTADOS E5 (LATENCIA LAZO CERRADO)
+    # --------------------------------------------------------------------------
+    s14_e5 = prs.slides.add_slide(blank)
+    add_header(s14_e5, "10. Experimento E5: Latencia Real de Control en Lazo Cerrado", "Persona 2", 14)
     fig3 = os.path.join(FIG_DIR, "figura_3_latencia_controlador.png")
     if os.path.exists(fig3):
-        s13.shapes.add_picture(fig3, Inches(0.45), Inches(1.25), width=Inches(7.3))
+        s14_e5.shapes.add_picture(fig3, Inches(0.45), Inches(1.25), width=Inches(7.3))
     add_styled_table(
-        s13, 7.9, 1.3, 5.0, 2.7,
+        s14_e5, 7.9, 1.3, 5.0, 2.7,
         headers=["Sensores", "Media (μ ± σ)", "P50", "P95"],
         rows=[
             ["1 (n=15)", "0,11 ± 0,22 ms", "0,07 ms", "0,49 ms"],
@@ -561,7 +678,7 @@ def build_deck():
         font_size=12
     )
     add_card(
-        s13, 7.9, 4.2, 5.0, 2.6,
+        s14_e5, 7.9, 4.2, 5.0, 2.6,
         title="Apto para Tiempo Real Blando",
         bullets=[
             "Medición real sobre Mosquitto + contenedor controlador en Docker.",
@@ -569,15 +686,15 @@ def build_deck():
         ],
         bg=C_SOFT_TEAL, border=C_TEAL, font_size=13
     )
-    set_notes(s13, "[Persona 2 | 15:45 - 16:45] Explicar Figura 3 con las mediciones reales sobre Mosquitto.")
+    set_notes(s14_e5, "[Persona 2 | 15:45 - 16:45] Explicar Figura 3 con las mediciones reales sobre Mosquitto.")
 
     # --------------------------------------------------------------------------
-    # SLIDE 14: CONCLUSIONES
+    # SLIDE 15: CONCLUSIONES
     # --------------------------------------------------------------------------
-    s14 = prs.slides.add_slide(blank)
-    add_header(s14, "11. Conclusiones y Lecciones Aprendidas", "Persona 1 & 2", 14)
+    s15 = prs.slides.add_slide(blank)
+    add_header(s15, "11. Conclusiones y Lecciones Aprendidas", "Persona 1 & 2", 15)
     add_card(
-        s14, 0.55, 1.35, 5.9, 5.4,
+        s15, 0.55, 1.35, 5.9, 5.4,
         title="Infraestructura y Capa IoT (Persona 1)",
         bullets=[
             "Contenedores Docker y k3d permiten modelar clústeres multinodo con sobrecarga mínima frente a VMs completas.",
@@ -587,7 +704,7 @@ def build_deck():
         bg=C_SOFT_TEAL, border=C_TEAL, font_size=14
     )
     add_card(
-        s14, 6.85, 1.35, 5.9, 5.4,
+        s15, 6.85, 1.35, 5.9, 5.4,
         title="Procesamiento y Resiliencia (Persona 2)",
         bullets=[
             "Spark supera en 3,86× a Python y 4,30× a Hadoop en 10M de registros gracias al procesamiento en memoria.",
@@ -596,18 +713,18 @@ def build_deck():
         ],
         bg=C_SOFT_AMBER, border=C_AMBER, font_size=14
     )
-    set_notes(s14, "[Persona 1 y Persona 2 | 16:45 - 17:45] Conclusiones repartidas 30s cada uno.")
+    set_notes(s15, "[Persona 1 y Persona 2 | 16:45 - 17:45] Conclusiones repartidas 30s cada uno.")
 
     # --------------------------------------------------------------------------
-    # SLIDE 15: TRABAJO FUTURO Y CIERRE
+    # SLIDE 16: TRABAJO FUTURO Y CIERRE
     # --------------------------------------------------------------------------
-    s15 = prs.slides.add_slide(blank)
-    add_header(s15, "12. Líneas de Trabajo Futuro y Preguntas", "Persona 1", 15)
-    add_card(s15, 0.55, 1.35, 5.9, 2.5, title="Apache Kafka", bullets=["Reemplazar o complementar Mosquitto para event sourcing y retención distribuida de flujos."], font_size=14)
-    add_card(s15, 6.85, 1.35, 5.9, 2.5, title="Prometheus & Grafana", bullets=["Observabilidad en tiempo real de CPU/RAM de pods k3s, workers Spark y métricas de pH."], font_size=14)
-    add_card(s15, 0.55, 4.1, 5.9, 2.5, title="Ceph sobre Proxmox VE", bullets=["Evaluar almacenamiento distribuido de objetos en un clúster físico multi-host."], font_size=14)
-    add_card(s15, 6.85, 4.1, 5.9, 2.5, title="¡Muchas Gracias!", bullets=["Repositorio listo, informe en formato APA 7 y demostraciones reproducibles.", "Quedamos a disposición del tribunal."], bg=C_SOFT_TEAL, border=C_TEAL, font_size=14)
-    set_notes(s15, "[Persona 1 | 17:45 - 18:30] Cierre de la exposición y ronda de preguntas.")
+    s16 = prs.slides.add_slide(blank)
+    add_header(s16, "12. Líneas de Trabajo Futuro y Preguntas", "Persona 1", 16)
+    add_card(s16, 0.55, 1.35, 5.9, 2.5, title="Apache Kafka", bullets=["Reemplazar o complementar Mosquitto para event sourcing y retención distribuida de flujos."], font_size=14)
+    add_card(s16, 6.85, 1.35, 5.9, 2.5, title="Prometheus & Grafana", bullets=["Observabilidad en tiempo real de CPU/RAM de pods k3s, workers Spark y métricas de pH."], font_size=14)
+    add_card(s16, 0.55, 4.1, 5.9, 2.5, title="Ceph sobre Proxmox VE", bullets=["Evaluar almacenamiento distribuido de objetos en un clúster físico multi-host."], font_size=14)
+    add_card(s16, 6.85, 4.1, 5.9, 2.5, title="¡Muchas Gracias!", bullets=["Repositorio listo, informe en formato APA 7 y demostraciones reproducibles.", "Quedamos a disposición del tribunal."], bg=C_SOFT_TEAL, border=C_TEAL, font_size=14)
+    set_notes(s16, "[Persona 1 | 17:45 - 18:30] Cierre de la exposición y ronda de preguntas.")
 
     pptx_path = os.path.join(DOCS_DIR, "Presentacion_TIF_SOD_2026.pptx")
     prs.save(pptx_path)
