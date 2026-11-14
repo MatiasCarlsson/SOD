@@ -188,10 +188,10 @@ def build_report():
         add_p(doc, "", indent_cm=0)
     add_p(doc, "Modelado y Análisis de un Sistema Automatizado de Cultivo Hidropónico Distribuido: Evaluación de Desempeño, Escalabilidad y Resiliencia",
           bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, indent_cm=0, space_after=24)
-    add_p(doc, "Trabajo Integrador Final — Actividad de Evaluación 4", align=WD_ALIGN_PARAGRAPH.CENTER, indent_cm=0, space_after=18)
+    add_p(doc, "Trabajo Integrador Final: Actividad de Evaluación 4", align=WD_ALIGN_PARAGRAPH.CENTER, indent_cm=0, space_after=18)
     add_p(doc, "Equipo de Trabajo (Persona 1 y Persona 2)", align=WD_ALIGN_PARAGRAPH.CENTER, indent_cm=0, space_after=6)
     add_p(doc, "Facultad de Ingeniería, Tecnología y Arquitectura", align=WD_ALIGN_PARAGRAPH.CENTER, indent_cm=0, space_after=6)
-    add_p(doc, "Ingeniería en Sistemas de Información — Sistemas Operativos Distribuidos", align=WD_ALIGN_PARAGRAPH.CENTER, indent_cm=0, space_after=6)
+    add_p(doc, "Ingeniería en Sistemas de Información - Sistemas Operativos Distribuidos", align=WD_ALIGN_PARAGRAPH.CENTER, indent_cm=0, space_after=6)
     add_p(doc, "Noviembre de 2026", align=WD_ALIGN_PARAGRAPH.CENTER, indent_cm=0)
     doc.add_page_break()
 
@@ -210,7 +210,7 @@ def build_report():
 
     # --- 1. INTRODUCCIÓN Y OBJETIVOS ---
     add_h1(doc, "1. Introducción y Objetivos")
-    add_p(doc, "La computación distribuida y las arquitecturas basadas en contenedores han transformado la infraestructura de las Tecnologías de la Información (TI), permitiendo abordar cargas de trabajo masivas impulsadas por la Internet de las Cosas (IoT) y el procesamiento de grandes volúmenes de datos (Tanenbaum & van Steen, 2023). En este marco, la agricultura de precisión —y específicamente el cultivo hidropónico en técnica de película nutritiva (NFT)— constituye un caso de estudio exigente para validar los principios de los sistemas operativos distribuidos.")
+    add_p(doc, "La computación distribuida y las arquitecturas basadas en contenedores han transformado la infraestructura de las Tecnologías de la Información (TI), permitiendo abordar cargas de trabajo masivas impulsadas por la Internet de las Cosas (IoT) y el procesamiento de grandes volúmenes de datos (Tanenbaum & van Steen, 2023). En este marco, la agricultura de precisión, y específicamente el cultivo hidropónico en técnica de película nutritiva (NFT), constituye un caso de estudio exigente para validar los principios de los sistemas operativos distribuidos.")
     add_p(doc, "A diferencia de la agricultura en suelo, un cultivo hidropónico carece de amortiguación mineral natural, por lo que variables críticas como el potencial hidrógeno (pH, rango óptimo 5,5–6,5), la conductividad eléctrica (1,2–2,5 mS/cm), la temperatura del agua (18–24 °C), la humedad relativa (50–70 %) y el nivel del reservorio (> 30 %) requieren supervisión continua y acciones correctivas inmediatas (Resh, 2012). Desviaciones de pH fuera de rango precipitan nutrientes esenciales (Fe, Ca, P) y niveles bajos de tanque provocan cavitación de bombas en pocas horas.")
 
     add_h2(doc, "1.1. Objetivo General y Objetivos Específicos")
