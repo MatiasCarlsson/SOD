@@ -38,11 +38,11 @@
 > "Antes de la implementación, repasemos las bases teóricas."
 
 ### Diapositiva 7 — KVM (Proxmox) vs. Docker *(3:40 – 4:40)*
-> "En la base está la virtualización. **Proxmox** usa KVM, un hipervisor tipo 1: cada máquina virtual emula hardware y corre su propio kernel. Eso da un aislamiento fuerte, pero cuesta RAM reservada y arranques de 30 a 90 segundos.
+> "En la base está la virtualización. Como ven en la **tabla comparativa**, contrastamos **Proxmox VE con KVM** frente a **Docker**:
+> - En la fila de *abstracción y aislamiento*, una VM en KVM emula hardware mediante hipervisor tipo 1 y ejecuta un kernel independiente por máquina. Eso da aislamiento fuerte, pero como muestran las filas de *overhead y arranque*, paga SO huésped completo, RAM reservada y entre **30 y 90 segundos** para iniciar, limitando un equipo de 16 GB a unas **4 a 8 VMs**.
+> - En la columna de la derecha, **Docker** comparte el kernel del host, aísla procesos con **namespaces** y **cgroups**, usa capas OverlayFS y arranca en **0,5 a 2 segundos**, permitiendo correr decenas de microservicios y un clúster k3s completo en el mismo hardware.
 >
-> **Docker** virtualiza a nivel de sistema operativo: todos los contenedores comparten el kernel del host y se aíslan con **namespaces** y **cgroups**. Arrancan en uno o dos segundos.
->
-> Por eso, como muestra el recuadro de decisión, Proxmox lo analizamos en teoría y en el laboratorio usamos Docker para emular varios nodos y un clúster k3s en una sola máquina.
+> Por eso, como resume el recuadro inferior **DECISIÓN DE DISEÑO**, analizamos Proxmox en lo teórico y usamos Docker en el laboratorio.
 >
 > Le paso la palabra a **[Nombre Persona 2]** para la orquestación y la mensajería."
 >
@@ -65,20 +65,20 @@
 > Esos datos alimentan **(4)** el procesamiento distribuido con Spark, Hadoop y una línea base en Python. Y **(5)** Ansible verifica todo el entorno de forma idempotente."
 
 ### Diapositiva 13 — Simulación y control reactivo *(8:40 – 9:40)*
-> "Los sensores son simulados pero realistas: cinco variables, ruido gaussiano, deriva sinusoidal, evaporación y alrededor de un **8 % de anomalías** inyectadas para exigir al controlador. La semilla fija hace que todo sea reproducible.
+> "En el panel izquierdo **SENSOR SIMULADO** detallamos cómo modelamos los datos: cinco variables (pH, conductividad, temperatura, humedad y nivel de agua), con ruido gaussiano (σ = 0,03 en pH), deriva sinusoidal, evaporación y cerca de un **8 % de anomalías** inyectadas para estresar al sistema, todo con semilla fija para que sea reproducible.
 >
-> En la tabla están las reglas: pH mayor a 6,5 → `DOSIFICAR_ACIDO`; menor a 5,5 → `DOSIFICAR_BASE`; agua por debajo del 30 % → `REPONER_AGUA`; y temperatura fuera de 18–24 °C → enfriador o calefactor.
+> A la derecha, la **tabla de reglas agronómicas** muestra el umbral, el actuador y la orden emitida: pH > 6,5 → `DOSIFICAR_ACIDO`; pH < 5,5 → `DOSIFICAR_BASE`; nivel < 30 % → `REPONER_AGUA`; y temperatura fuera de 18–24 °C → enfriador o calefactor.
 >
-> La latencia fin a fin es el tiempo entre que el sensor emite la lectura y el controlador despacha la orden. Se guarda en un CSV y es la base del experimento E5."
+> Abajo, en el recuadro **LATENCIA FIN A FIN**, definimos exactamente qué medimos en el experimento E5: `Δt = t_comando − t_emisión_sensor`, guardado en `controller_latencies.csv`."
 
 ### Diapositiva 14 — Demo 1 · Lazo cerrado IoT *(9:40 – 11:00)*
-> *(Nota: hacé **clic sobre el video** para reproducirlo dentro de la diapositiva, o ejecutá el Bloque 1 de `./scripts/demo_en_vivo.sh`.)*
+> *(Nota: hacé **clic sobre el video** para reproducirlo dentro de la diapositiva, o ejecutá el Bloque 1 de `./scripts/demo_en_vivo.sh` siguiendo los 4 comandos del panel izquierdo `PASOS`.)*
 >
-> "Veámoslo funcionando. Levantamos el stack con `docker compose up -d`: broker, sensor, controlador y recolector. Con `docker compose ps` comprobamos que los cuatro servicios están arriba en segundos.
+> "Veámoslo funcionando en el video de la derecha. Primero levantamos el stack con `docker compose up -d` y con `docker compose ps` comprobamos que los 4 contenedores (`mosquitto`, `sensor-simulator`, `controller` y `collector`) quedan en estado `Up`.
 >
-> En los logs vemos que el sensor y el controlador se conectan al broker y se suscriben a `hidroponia/+/telemetria`. Y con `ls data/raw/` comprobamos que el recolector ya está escribiendo los lotes JSON."
+> En los logs verificamos que sensor y controlador se conectan al broker en `mosquitto:1883` y quedan escuchando `hidroponia/+/telemetria`. Y en la terminal se ve `ls data/raw/`, confirmando que el recolector ya está guardando los lotes `batch_*.json` de forma atómica."
 >
-> *(Solo si lo ejecutás en vivo y aparece la línea del controlador:)* "Ahí está: llegó un pH por encima de 6,5 y el controlador emitió `DOSIFICAR_ACIDO` al instante."
+> *(Si lo ejecutás en vivo y aparece la línea amarilla del controlador:)* "Ahí está: llegó un pH por encima de 6,5 y el controlador emitió `DOSIFICAR_ACIDO` al instante."
 >
 > "Le cedo la palabra a **[Nombre Persona 2]** para los resultados."
 >
