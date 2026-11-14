@@ -14,13 +14,6 @@ El presente trabajo de investigación aplicada modela, implementa y evalúa un e
 
 ---
 
-### Abstract
-This applied research work models, implements, and evaluates an end-to-end distributed computing environment for the real-time monitoring and closed-loop control of an automated hydroponic crop system. Addressing the massive influx of Internet of Things (IoT) telemetry and the strict resilience requirements of cyber-physical systems, this study integrates operating-system-level virtualization (Docker), lightweight container orchestration (k3s via k3d), decoupled publish-subscribe messaging (MQTT with Eclipse Mosquitto), idempotent infrastructure-as-code (Ansible), and distributed data processing frameworks (Apache Hadoop MapReduce and Apache Spark in both Batch and Structured Streaming modes). Five systematic quantitative experiments (E1 to E5) were conducted across synthetic datasets of 1 million and 10 million readings, evaluating execution times, parallel speedup, pod recovery times under fault injection, and closed-loop control latency. Experimental results indicate that Apache Spark outperforms both sequential Python and Hadoop Streaming in data-intensive tasks, following Amdahl's Law constraints, while k3s orchestration achieves self-healing pod recovery in under 2 seconds, preserving telemetry pipeline integrity.
-
-*Keywords:* Distributed Operating Systems, Container Virtualization, Orchestration, k3s, MQTT, Apache Spark, MapReduce, Automated Hydroponics, Idempotence.
-
----
-
 ## 1. Introducción
 
 En las últimas décadas, los sistemas operativos distribuidos y las arquitecturas de cómputo desacopladas han transformado la infraestructura de las Tecnologías de la Información (TI). La transición desde entornos centralizados y monolíticos hacia ecosistemas distribuidos ha sido impulsada por dos factores primordiales: la demanda insaciable de procesamiento escalable para grandes volúmenes de datos (*Big Data*) y la proliferación de dispositivos ciberfísicos y sensores conectados a través de la Internet de las Cosas (IoT) (Tanenbaum & van Steen, 2023).
