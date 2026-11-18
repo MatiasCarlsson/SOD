@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# ==============================================================================
+
 # Script Interactivo de Demostración en Vivo (Defensa Oral - SOD 2026)
 # Uso: ./scripts/demo_en_vivo.sh
-# ==============================================================================
+
 set -e
 
 CYAN='\033[0;36m'
@@ -18,9 +18,9 @@ pause_step() {
 }
 
 clear
-echo -e "${CYAN}${BOLD}==============================================================================${NC}"
+echo -e "${CYAN}${BOLD}${NC}"
 echo -e "${CYAN}${BOLD}   DEMO EN VIVO: SISTEMA AUTOMATIZADO DE CULTIVO HIDROPÓNICO DISTRIBUIDO${NC}"
-echo -e "${CYAN}${BOLD}==============================================================================${NC}"
+echo -e "${CYAN}${BOLD}${NC}"
 echo ""
 echo "Este asistente ejecuta de forma guiada los 4 bloques de demostración práctica:"
 echo "  1. [Persona 1] Stack IoT en Docker Compose (Mosquitto + Sensor + Controlador)"
@@ -29,9 +29,7 @@ echo "  3. [Persona 2] Orquestación k3s/k3d: Escalado (kubectl scale) y Self-He
 echo "  4. [Persona 2] Idempotencia con Ansible (changed=0)"
 pause_step
 
-# ------------------------------------------------------------------------------
-# BLOQUE 1: IOT Y LAZO CERRADO
-# ------------------------------------------------------------------------------
+# Bloque 1: IoT y lazo cerrado
 echo -e "${GREEN}${BOLD}[DEMO 1] Levantando broker Mosquitto, sensor, recolector y controlador...${NC}"
 docker compose up -d mosquitto collector controller sensor-simulator
 sleep 4
@@ -47,16 +45,12 @@ echo -e "${CYAN}--> Archivos persistidos por el recolector en data/raw/:${NC}"
 ls -lh data/raw/ | tail -n 5
 pause_step
 
-# ------------------------------------------------------------------------------
-# BLOQUE 2: APACHE SPARK
-# ------------------------------------------------------------------------------
+# Bloque 2: Apache Spark
 echo -e "${GREEN}${BOLD}[DEMO 2] Ejecutando Job PySpark Batch sobre 1.000.000 de lecturas sintéticas...${NC}"
 .venv/bin/python src/processing/spark/batch_analysis.py --input data/datasets/synthetic_1M.csv --master "local[2]"
 pause_step
 
-# ------------------------------------------------------------------------------
-# BLOQUE 3: K3S / K3D ORQUESTACIÓN, ESCALADO Y TOLERANCIA A FALLOS
-# ------------------------------------------------------------------------------
+# Bloque 3: k3s / k3d orquestación, escalado y tolerancia a fallos
 echo -e "${GREEN}${BOLD}[DEMO 3] Verificando / Creando clúster k3s multinodo (1 server + 2 agents)...${NC}"
 if ! k3d cluster list | grep -q "sod-cluster"; then
     make k3s-up
@@ -85,16 +79,12 @@ echo -e "${CYAN}--> Estado inmediato tras la falla (Self-Healing en acción):${N
 kubectl get pods -l app=sensor-simulator -o wide
 pause_step
 
-# ------------------------------------------------------------------------------
-# BLOQUE 4: ANSIBLE IDEMPOTENCIA
-# ------------------------------------------------------------------------------
+# Bloque 4: Ansible idempotencia
 echo -e "${GREEN}${BOLD}[DEMO 4] Verificando idempotencia de infraestructura con Ansible...${NC}"
 ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 pause_step
 
-# ------------------------------------------------------------------------------
-# LIMPIEZA FINAL
-# ------------------------------------------------------------------------------
+# Limpieza final
 echo -e "${YELLOW}${BOLD}Limpiando entorno de demo (Docker Compose + k3d)...${NC}"
 docker compose down
 k3d cluster delete sod-cluster || true

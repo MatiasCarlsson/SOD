@@ -57,9 +57,7 @@ def run_isolated_json(script_rel_path: str, extra_args: list) -> dict:
     raise ValueError(f"No se encontró salida JSON válida en {script_rel_path}: {proc.stdout}")
 
 
-# ==============================================================================
-# EXPERIMENTO 1: Volumen de datos (Python vs Hadoop vs Spark)
-# ==============================================================================
+# Experimento 1: Volumen de datos (Python vs Hadoop vs Spark)
 def run_experiment_1(datasets: list, repetitions: int = 3):
     logger.info("=== INICIANDO EXPERIMENTO E1: Volumen de Datos (Python vs Hadoop vs Spark) ===")
     results_file = os.path.join(METRICS_DIR, "experiment_1_volume.csv")
@@ -127,9 +125,7 @@ def run_experiment_1(datasets: list, repetitions: int = 3):
     save_metrics_to_csv(results_file, records, fieldnames, overwrite=True)
 
 
-# ==============================================================================
-# EXPERIMENTO 2: Escalabilidad y Speedup de Spark (1, 2 y 3 Workers / Hilos)
-# ==============================================================================
+# Experimento 2: Escalabilidad y Speedup de Spark (1, 2 y 3 Workers / Hilos)
 def run_experiment_2(dataset_path: str, repetitions: int = 3):
     logger.info("=== INICIANDO EXPERIMENTO E2: Escalabilidad y Speedup de Spark en %s ===", os.path.basename(dataset_path))
     results_file = os.path.join(METRICS_DIR, "experiment_2_spark_scalability.csv")
@@ -158,9 +154,7 @@ def run_experiment_2(dataset_path: str, repetitions: int = 3):
     save_metrics_to_csv(results_file, records, fieldnames, overwrite=True)
 
 
-# ==============================================================================
-# EXPERIMENTO 5: Control Automático y Latencia Real con Mosquitto + Controlador
-# ==============================================================================
+# Experimento 5: Control Automático y Latencia Real con Mosquitto + Controlador
 def run_experiment_5(sensor_counts: list = [1, 10, 50], events_per_sensor: int = 15):
     logger.info("=== INICIANDO EXPERIMENTO E5: Latencia Real de Control en Lazo Cerrado ===")
     results_file = os.path.join(METRICS_DIR, "experiment_5_latency_summary.csv")
